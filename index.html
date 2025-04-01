@@ -11,6 +11,9 @@
       overflow: hidden;
       background: #70c5ce;
       height: 100%;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
     }
 
     canvas {
@@ -75,27 +78,12 @@
     flapStrength = -7;
 
     const birdImg = new Image();
-    birdImg.src = "bird.png"; // Add your bird.png in the same folder!
+    birdImg.src = "bird.png"; // Replace with your image file (60x60 works great)
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
-    function preventDoubleTapZoom() {
-  let lastTouchEnd = 0;
-
-  document.addEventListener(
-    'touchend',
-    function (e) {
-      const now = new Date().getTime();
-      if (now - lastTouchEnd <= 300) {
-        e.preventDefault();
-      }
-      lastTouchEnd = now;
-    },
-    { passive: false }
-  );
-}
 
     function setupControls() {
       const useTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -108,6 +96,21 @@
         });
         canvas.addEventListener("click", flap);
       }
+    }
+
+    function preventDoubleTapZoom() {
+      let lastTouchEnd = 0;
+      document.addEventListener(
+        "touchend",
+        function (e) {
+          const now = new Date().getTime();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        },
+        { passive: false }
+      );
     }
 
     function initGame() {
@@ -225,6 +228,7 @@
     document.getElementById("restartBtn").addEventListener("click", initGame);
     window.addEventListener("resize", resizeCanvas);
 
+    preventDoubleTapZoom();
     initGame();
   </script>
 </body>
