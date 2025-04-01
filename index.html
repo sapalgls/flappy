@@ -2,32 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flappy Bird Remake</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Flappy Bird Mobile</title>
   <style>
-    * {
+    html, body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
       overflow: hidden;
       background: #70c5ce;
-      font-family: sans-serif;
-      user-select: none;
+      height: 100%;
     }
 
     canvas {
       display: block;
-      margin: auto;
       background: #70c5ce;
     }
 
     #score {
-      position: absolute;
+      position: fixed;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
@@ -35,10 +27,11 @@
       font-weight: bold;
       color: white;
       text-shadow: 2px 2px #000;
+      z-index: 10;
     }
 
     #gameOver {
-      position: absolute;
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -47,6 +40,7 @@
       color: white;
       text-align: center;
       display: none;
+      z-index: 10;
     }
 
     #restartBtn {
@@ -59,24 +53,10 @@
       color: black;
       cursor: pointer;
     }
-
-    @media (max-width: 600px) {
-      #score {
-        font-size: 1.5rem;
-      }
-
-      #gameOver {
-        font-size: 2rem;
-      }
-
-      #restartBtn {
-        font-size: 0.9rem;
-      }
-    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="480" height="640"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <div id="score">Score: 0</div>
   <div id="gameOver">
     Game Over<br/>
@@ -88,16 +68,38 @@
     const ctx = canvas.getContext("2d");
 
     let bird, pipes, gravity, flapStrength, score, gameRunning, pipeGap, frame;
-
-    const birdRadius = 15;
+    let birdRadius = 20;
     const pipeWidth = 60;
-    pipeGap = 140;
-    gravity = 0.5;
-    flapStrength = -8;
+    pipeGap = 150;
+    gravity = 0.45;
+    flapStrength = -7;
+
+    const birdImg = new Image();
+    birdImg.src = "bird.png"; // Add your bird.png in the same folder!
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function setupControls() {
+      const useTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+      if (useTouch) {
+        canvas.addEventListener("touchstart", flap, { passive: true });
+      } else {
+        window.addEventListener("keydown", (e) => {
+          if (e.code === "Space") flap();
+        });
+        canvas.addEventListener("click", flap);
+      }
+    }
 
     function initGame() {
+      resizeCanvas();
+
       bird = {
-        x: 100,
+        x: canvas.width / 4,
         y: canvas.height / 2,
         velocity: 0
       };
@@ -106,18 +108,32 @@
       score = 0;
       frame = 0;
       gameRunning = true;
+
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("score").textContent = "Score: 0";
+
+      setupControls();
       loop();
     }
 
-    const birdImg = new Image();
-birdImg.src = "bird.png"; // make sure this file exists in the same folder
-
-function drawBird() {
-  ctx.drawImage(birdImg, bird.x - birdRadius, bird.y - birdRadius, birdRadius * 2, birdRadius * 2);
-}
-
+    function drawBird() {
+      if (birdImg.complete && birdImg.naturalWidth > 0) {
+        ctx.drawImage(
+          birdImg,
+          bird.x - birdRadius,
+          bird.y - birdRadius,
+          birdRadius * 2,
+          birdRadius * 2
+        );
+      } else {
+        ctx.beginPath();
+        ctx.arc(bird.x, bird.y, birdRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "yellow";
+        ctx.fill();
+        ctx.strokeStyle = "orange";
+        ctx.stroke();
+      }
+    }
 
     function drawPipes() {
       ctx.fillStyle = "green";
@@ -131,8 +147,7 @@ function drawBird() {
       bird.velocity += gravity;
       bird.y += bird.velocity;
 
-      // Add new pipes
-      if (frame % 90 === 0) {
+      if (frame % 100 === 0) {
         const top = Math.random() * (canvas.height - pipeGap - 100) + 20;
         pipes.push({
           x: canvas.width,
@@ -142,11 +157,9 @@ function drawBird() {
         });
       }
 
-      // Move and remove pipes
       pipes.forEach(pipe => pipe.x -= 2);
       pipes = pipes.filter(pipe => pipe.x + pipeWidth > 0);
 
-      // Check collisions
       for (let pipe of pipes) {
         if (
           bird.x + birdRadius > pipe.x &&
@@ -163,7 +176,6 @@ function drawBird() {
         }
       }
 
-      // Check floor/ceiling
       if (bird.y + birdRadius > canvas.height || bird.y - birdRadius < 0) {
         gameOver();
       }
@@ -195,32 +207,9 @@ function drawBird() {
       bird.velocity = flapStrength;
     }
 
-    // Controls
-    window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") flap();
-    });
-
-    canvas.addEventListener("click", flap);
-    canvas.addEventListener("touchstart", flap);
-
     document.getElementById("restartBtn").addEventListener("click", initGame);
-
-    // Mobile scaling
-    function resizeCanvas() {
-      const ratio = 480 / 640;
-      let w = window.innerWidth;
-      let h = window.innerHeight;
-      if (w / h > ratio) {
-        w = h * ratio;
-      } else {
-        h = w / ratio;
-      }
-      canvas.style.width = w + "px";
-      canvas.style.height = h + "px";
-    }
-
     window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+
     initGame();
   </script>
 </body>
