@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Flappy Bird Mobile</title>
+  <title>Flappy Cimer</title>
   <style>
     html, body {
       margin: 0;
@@ -78,7 +78,13 @@
     flapStrength = -7;
 
     const birdImg = new Image();
-    birdImg.src = "bird.png"; // Replace with your image file (60x60 works great)
+    birdImg.src = "flap.png"; // Make sure this file is available
+
+    const bgImg = new Image();
+    bgImg.src = "background.png"; // Your background image
+
+    const titleImg = new Image();
+    titleImg.src = "title.png"; // Your title image
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -161,6 +167,29 @@
       });
     }
 
+    function drawBackground() {
+      if (bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = "#70c5ce";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function drawTitle() {
+      if (titleImg.complete && titleImg.naturalWidth > 0) {
+        const titleWidth = canvas.width * 0.6;
+        const titleHeight = (titleImg.height / titleImg.width) * titleWidth;
+        ctx.drawImage(
+          titleImg,
+          (canvas.width - titleWidth) / 2,
+          20,
+          titleWidth,
+          titleHeight
+        );
+      }
+    }
+
     function update() {
       bird.velocity += gravity;
       bird.y += bird.velocity;
@@ -199,11 +228,6 @@
       }
     }
 
-    function drawBackground() {
-      ctx.fillStyle = "#70c5ce";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
     function gameOver() {
       gameRunning = false;
       document.getElementById("gameOver").style.display = "block";
@@ -214,6 +238,7 @@
 
       frame++;
       drawBackground();
+      drawTitle(); // <- show title at top
       update();
       drawPipes();
       drawBird();
